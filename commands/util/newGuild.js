@@ -11,4 +11,5 @@ function isNewGuild(interaction){
     return interaction.guild != null && !(Object.keys(database).includes(interaction.guild.id));
 }
 
+
 module.exports = {registerNewGuild , isNewGuild};
