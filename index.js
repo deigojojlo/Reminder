@@ -78,7 +78,7 @@ const rest = new REST({ version: '10' }).setToken(token);
     }
 })();
 
-client.on('ready', async () => {
+client.on('clientReady', async () => {
     console.log(`Bot connecté en tant que ${client.user.tag}`);
 
 	for (const [guildId,guildData] of Object.entries(database)) {

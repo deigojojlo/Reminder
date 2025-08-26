@@ -28,8 +28,29 @@ function toEUDayString(date){
 function dateToDayString(date){
     return date.Year + date.Month + date.Day
 }
+
 function dayEquals(d1,d2){
     return d1.Year + d1.Month + d1.Day == d2.Year + d2.Month + d2.Day;
 }
 
-module.exports = {stringToDate,dateToString,dayEquals,dateToDayString,toEUString,toEUHourString,toEUDayString};
+function getDate(gap = 0){
+    var date = new Date();
+    date.setDate(date.getDate() + gap );
+    return date;
+}
+
+function formatDate(date){
+    var formatedDate = date.toISOString().replaceAll("-","").replaceAll(":","");
+    var dateObject = stringToDate(formatedDate);
+    return dateToDayString(dateObject);
+}
+
+function toIsoString(date){
+    return date.toISOString().replaceAll("-","").replaceAll(":","");
+}
+
+function increaseDate(date){
+    date.setDate(date.getDate() + 1);
+}
+
+module.exports = {stringToDate,dateToString,dayEquals,dateToDayString,toEUString,toEUHourString,toEUDayString, getDate,formatDate,toIsoString,increaseDate};

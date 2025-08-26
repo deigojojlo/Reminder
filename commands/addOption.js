@@ -22,13 +22,23 @@ module.exports = {
     ),
     async execute(interaction) {
         if (isNewGuild(interaction)) {
-            await interaction.reply("Your guild is not register, register it first with /edt register");
-        } else {
-            const role = interaction.option.getString("roleId");
-            const optionRole = interaction.option.getString('optionRole');
-            const optionName = interaction.option.getString('optionName');
-            database[interaction.guild.id]["roles"][role][option_rules][optionName] = optionRole;
-            save(database);
+            await interaction.channel.send("Your guild is not register, register it first with /edt register");
         }
+
+        const role = interaction.options.getString('targetedrole');
+        const optionRole = interaction.options.getString('optrole');
+        const optionName = interaction.options.getString('optname');
+        console.log("recuperation des data ok");
+        
+        // init if empty
+        database[interaction.guild.id]["roles"][role]["option_rules"][optionRole] = database[interaction.guild.id]["roles"][role]["option_rules"][optionRole] || [] ;
+        // add the option summary
+        database[interaction.guild.id]["roles"][role]["option_rules"][optionRole].push(optionName)
+        
+        console.log("debut de la save");
+        save(database);
+        console.log("fin de la save");
+        await interaction.reply(" Enregistrement reussi");
+        
     }
 }

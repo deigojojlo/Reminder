@@ -1,12 +1,18 @@
 {
-    "1402260824046960670": {
-        "roles": {
-            "1402264546717991023": {
-                "link": "https://edt.math.univ-paris-diderot.fr/data/fusionL3MI.ics",
-                "file": "./data/1402264546717991023fusionL3MI.ics.json",
-                "option_rules": {},
-                "except": []
-            }
-        }
+  "1402260824046960670": {
+    "roles": {
+      "1402264546717991023": {
+        "link": "https://edt.math.univ-paris-diderot.fr/data/fusionL3MI.ics",
+        "file": "./data/1402264546717991023fusionL3MI.ics.json",
+        "option_rules": {
+          "1409600987987050646": [
+            "Topologie"
+          ]
+        },
+        "except": [
+          "Réunion de rentrée L3 MFA, ME, DLMP, ALGO&DEC"
+        ]
+      }
     }
+  }
 }

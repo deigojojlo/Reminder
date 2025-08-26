@@ -8,7 +8,7 @@ function registerNewGuild(interaction) {
 }
 
 function isNewGuild(interaction){
-    return interaction.guild != null && !(interaction.guild.id in Object.keys(database)) ;
+    return interaction.guild != null && !(Object.keys(database).includes(interaction.guild.id));
 }
 
 module.exports = {registerNewGuild , isNewGuild};

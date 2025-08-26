@@ -1,16 +1,13 @@
 const { SlashCommandSubcommandBuilder, EmbedBuilder, time } = require("discord.js");
-const { execute } = require("./ignore");
 const { loadedData, database } = require("..");
-const { dicoSearch } = require("./util/dicoSearch");
-const { stringToDate, dayEquals, dateToDayString, toEUString, toEUHourString, toEUDayString} = require("./util/date");
+const { dateToDayString, toEUHourString, toEUDayString, getDate, formatDate, increaseDate} = require("./util/date");
+const { isException, checkOption, getAcceptedRole } = require("./util/edtUtil");
 
 
-function loadEvent(data,formatedDate){
+function loadEvent(data,roles,options,exceptions,formatedDate){
     var index = 0;
     const keeped = [];
-
     while (dateToDayString(data[index]["StartDate"]) < formatedDate){
-        // console.log("search");
         index ++;
     }
 
@@ -19,40 +16,23 @@ function loadEvent(data,formatedDate){
     
     while (dateToDayString(data[index]["StartDate"]) == chooseDate){
         // console.log(data[index]);
-        keeped.push(data[index])
-        // console.log("founded");
-        index++;
+        if (isException(data[index],exceptions)){
+            index ++;
+            continue;
+        }
+
+        if (checkOption(data[index],roles,options) == 0){
+            index++;
+            continue;
+        }
+
+        keeped.push(data[index++]);
     }
     return keeped;
 }
 
-function getAcceptedRole(interaction){
-    const roles = interaction.member.roles.cache.map(role => role.id);
-    const acceptedRoles = [];
 
-    //search roles for edt
-    for (const r of roles) {
-        if (Object.keys(database[interaction.guild.id]["roles"]).includes(r))
-            acceptedRoles.push(r);
-    }
-    return acceptedRoles;
-}
 
-function getDate(gap){
-    var date = new Date();
-    date.setDate(date.getDate() + gap );
-    return date;
-}
-
-function formatDate(date){
-    var formatedDate = date.toISOString().replaceAll("-","").replaceAll(":","");
-    var dateObject = stringToDate(formatedDate);
-    return dateToDayString(dateObject);
-}
-
-function increaseDate(date){
-    date.setDate(date.getDate() + 1);
-}
 
 
 module.exports = {
@@ -67,47 +47,44 @@ module.exports = {
     async execute(interaction) {
         const gap = interaction.options.getInteger("gap");
         const date = getDate(gap);
-        var formatedDate = formatDate(date);
         const acceptedRoles = getAcceptedRole(interaction);
+        const roles = interaction.member.roles.cache.map(role => role.id);
+        const embed = new EmbedBuilder()
+            .setColor(0x0099FF)
+            .setTitle("Emploi du temps")
+        var formatedDate = formatDate(date);
+        var options ;
+        var except;
+        var events = [];
 
         // check registration
         if (acceptedRoles.length == 0) {
             await interaction.reply("you don't have a role wich is linked to an edt");
             return ;
         }
-        
-        
-        // load the event for the roles list
-        var event = [];
-        while (event.length == 0){
+
+        while (events.length == 0){
             for (const role of acceptedRoles) {
-                event = event.concat(loadEvent(loadedData[role],formatedDate));
+                except = database[interaction.guild.id].roles[role].except || [];
+                options = database[interaction.guild.id].roles[role].option_rules || [] ;
+                events = events.concat(loadEvent(loadedData[role],roles,options,except,formatedDate));
             }
             increaseDate(date);
             formatedDate = formatDate(date);
         }
-        // sort to collapse the differente sources
-        event.sort((a,b) => {
-            if (a["Start"] == b["Start"]) {
-                return 0;
-            } else if (a["Start"] < b["Start"]){
-                return -1 ;
-            } else {
-                return 1;
-            }
-        });
 
-        // add fields to the embed
-        const embed = new EmbedBuilder()
-            .setColor(0x0099FF)
-            .setTitle("Emploi du temps")
-        for (const e of event){
-            embed.addFields(
-                { name : toEUHourString(e["StartDate"]) + " jusqu'à " + toEUHourString(e["EndDate"]), value : e["Summary"] + '\n' + e["Location"]}
-            );
+        // sort to collapse the differents sources
+        events.sort((a,b) => a.Start.localCompare(b.Start));
+
+        for (const event of events){
+            const name = `${toEUHourString(event.StartDate)} jusqu'à ${toEUHourString(event.EndDate)}`;
+            var val =
+                `📍 : ${event.Location}
+			    📝 : ${event.Summary}\n`;
+            embed.addFields({ name : name, value : val});
         }
-        embed.setDescription("La journée du " + toEUDayString(event[0]["StartDate"]));
-        embed.setFooter({text : "Reminder bot"});
+        embed.setDescription(`La journée du ${toEUDayString(events[0].StartDate)}`)
+        .setFooter({text : "Reminder bot"});
         await interaction.reply({embeds : [embed]});
     }
 }
