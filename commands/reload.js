@@ -1,5 +1,8 @@
 const { SlashCommandSubcommandBuilder } = require('discord.js');
-const { database } = require('../index');
+const { database, loadedData } = require('../index');
+const {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId} = require('./util/databaseUtil');
+const { isNewGuild } = require('./util/newGuild');
+
 module.exports = {
 	data: new SlashCommandSubcommandBuilder()
 		.setName('reload')
@@ -10,13 +13,18 @@ module.exports = {
             .setRequired(false)
         ),
 	async execute(interaction) {
-		if ( interaction.guild != null && !(interaction.guild in Object.keys(database))) {
+		if (isNewGuild(interaction,database)) {
             await interaction.reply("This guild is not register");
         }
 
         const role = interaction.options.getString('role');
-        if (role != null && role in Object.keys(database[interaction.guild]['roles'])) {
-            // reload database[interaction.guild]['roles'][role]
+        if (role != null && Object.keys(database[interaction.guild]['roles']).includes(role) )  {
+            const value = database[interaction.guild.id].roles[role];
+            await fetch(value.link,value.file,loadedData[role]);
+            await interaction.reply('L\ics a été rechargé');
+            return;
         }
+
+        await interaction.reply('Le role ne correspond pas à un ics enregistré');
 	}
 }

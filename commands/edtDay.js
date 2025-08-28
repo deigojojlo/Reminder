@@ -3,10 +3,13 @@ const { loadedData, database } = require("..");
 const { dateToDayString, toEUHourString, toEUDayString, getDate, formatDate, increaseDate} = require("./util/date");
 const { isException, checkOption, getAcceptedRole } = require("./util/edtUtil");
 
+const {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId} = require('./util/databaseUtil');
 
 function loadEvent(data,roles,options,exceptions,formatedDate){
     var index = 0;
     const keeped = [];
+    console.log(options);
+    
     while (dateToDayString(data[index]["StartDate"]) < formatedDate){
         index ++;
     }
@@ -21,7 +24,15 @@ function loadEvent(data,roles,options,exceptions,formatedDate){
             continue;
         }
 
+        console.log(data[index]);
+        console.log(roles);
+        console.log(options);
+        
+        console.log(checkOption(data[index],roles,options));
+        
+        
         if (checkOption(data[index],roles,options) == 0){
+            console.log("not an option");
             index++;
             continue;
         }
@@ -47,8 +58,12 @@ module.exports = {
     async execute(interaction) {
         const gap = interaction.options.getInteger("gap");
         const date = getDate(gap);
-        const acceptedRoles = getAcceptedRole(interaction);
-        const roles = interaction.member.roles.cache.map(role => role.id);
+        const acceptedRoles = getAcceptedRole(interaction,database);
+        const member = await interaction.guild.members.fetch(interaction.user.id);
+        const userRoles = member.roles.cache;
+        const roles = userRoles.filter(role => role.id !== interaction.guild.id).map( role => role.id);
+        console.log(roles);
+        
         const embed = new EmbedBuilder()
             .setColor(0x0099FF)
             .setTitle("Emploi du temps")
@@ -65,8 +80,8 @@ module.exports = {
 
         while (events.length == 0){
             for (const role of acceptedRoles) {
-                except = database[interaction.guild.id].roles[role].except || [];
-                options = database[interaction.guild.id].roles[role].option_rules || [] ;
+                except = getExcept(database,interaction,role) || [];
+                options = getOption(database,interaction,role) || [] ;
                 events = events.concat(loadEvent(loadedData[role],roles,options,except,formatedDate));
             }
             increaseDate(date);
@@ -74,7 +89,7 @@ module.exports = {
         }
 
         // sort to collapse the differents sources
-        events.sort((a,b) => a.Start.localCompare(b.Start));
+        events.sort((a,b) => a.Start < b.Start ? -1 : a.Start == b.Start ? 0 : 1);
 
         for (const event of events){
             const name = `${toEUHourString(event.StartDate)} jusqu'à ${toEUHourString(event.EndDate)}`;

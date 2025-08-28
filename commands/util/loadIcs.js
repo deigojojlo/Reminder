@@ -25,6 +25,6 @@ function read(filename) {
     return jsonData
 }
 
-module.exports = { fetch }
 
+module.exports = { fetch}
 // console.log(fetch("https://edt.math.univ-paris-diderot.fr/data/fusionL3MI.ics","1402264546717991023fusionL3MI.ics.json"))

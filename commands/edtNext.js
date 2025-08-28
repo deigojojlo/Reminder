@@ -2,6 +2,7 @@ const { SlashCommandSubcommandBuilder, EmbedBuilder} = require('discord.js');
 const { loadedData, database} = require('../index');
 const { toEUHourString, toEUDayString, getDate, toIsoString } = require('./util/date');
 const { isException, checkOption, getAcceptedRole } = require('./util/edtUtil');
+const {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId} = require('./util/databaseUtil');
 
 
 function loadEvent(data,roles,options,exceptions,formatedDate){
@@ -31,10 +32,10 @@ module.exports = {
 		.setName('next')
 		.setDescription('see your next event'),
 	async execute(interaction) {
-		const acceptedRoles = getAcceptedRole(interaction);
+		const acceptedRoles = getAcceptedRole(interaction,database);
 		const date = getDate();
 		const formatedDate = toIsoString(date);
-		const roles = interaction.member.roles.cache.map(role => role.id);
+		const roles = getGuildRoles(interaction);
 		const embed = new EmbedBuilder()
             .setColor(0x00FF00)
             .setTitle("Emploi du temps")
@@ -50,8 +51,8 @@ module.exports = {
 		}
 
 		for (const role of acceptedRoles){
-			exceptions = database[interaction.guild.id].roles[role].except;
-			options = database[interaction.guild.id].roles[role].option_rules;
+			exceptions = getExcept(database,interaction,role) || [];
+			options = getOption(database,interaction,role) || [] ;
 			keeped = concatEvent(keeped,loadEvent(loadedData[role],roles,options,exceptions,formatedDate));
 		}
 

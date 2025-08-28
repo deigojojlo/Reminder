@@ -1,6 +1,9 @@
 const { SlashCommandSubcommandBuilder} = require('discord.js');
 const { isNewGuild } = require('./util/newGuild');
-const { database, save } = require('../index');
+const { database } = require('../index');
+const {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId} = require('./util/databaseUtil');
+const { save } = require('./util/edtUtil');
+
 module.exports = {
     data : new SlashCommandSubcommandBuilder()
     .setName("addoption")
@@ -21,7 +24,7 @@ module.exports = {
         .setRequired(true)
     ),
     async execute(interaction) {
-        if (isNewGuild(interaction)) {
+        if (isNewGuild(interaction,database)) {
             await interaction.channel.send("Your guild is not register, register it first with /edt register");
         }
 
@@ -31,9 +34,10 @@ module.exports = {
         console.log("recuperation des data ok");
         
         // init if empty
-        database[interaction.guild.id]["roles"][role]["option_rules"][optionRole] = database[interaction.guild.id]["roles"][role]["option_rules"][optionRole] || [] ;
+        const entry = getGuildEntry(database,interaction)[role];
+        entry.Option[optionRole] = entry.Option[optionRole] || [] ;
         // add the option summary
-        database[interaction.guild.id]["roles"][role]["option_rules"][optionRole].push(optionName)
+        entry.Option[optionRole].push(optionName)
         
         console.log("debut de la save");
         save(database);

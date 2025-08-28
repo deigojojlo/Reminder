@@ -1,14 +1,13 @@
-const {database} = require("../../index.js")
 
-function registerNewGuild(interaction) {
-    console.log("register a new guild");
+function registerNewGuild(interaction,database) {
     database[interaction.guild.id] = {};
-    database[interaction.guild.id]["roles"] = {};
-    database[interaction.guild.id]["except"] = [];
+    database[interaction.guild.id].Entry = {};
+    database[interaction.guild.id].Except = [];
 }
 
-function isNewGuild(interaction){
-    return interaction.guild != null && !(Object.keys(database).includes(interaction.guild.id));
+function isNewGuild(interaction,database){
+    console.log(database);
+    return interaction.guild != null && (Object.keys(database).length == 0 || !(Object.keys(database).includes(interaction.guild.id)));
 }
 
 

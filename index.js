@@ -1,8 +1,7 @@
 const {  Client,REST, Routes,  GatewayIntentBits, Collection , Events} = require('discord.js');
 const { clientId, guildId, token , channelId} = require('./config.json');
-const fs = require('node:fs');
-const path = require('node:path');
 const { fetch } = require('./commands/util/loadIcs');
+const { load_database, loadCommands } = require('./commands/util/edtUtil');
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -12,59 +11,12 @@ const client = new Client({
 	],
 });
 client.commands = new Collection();
-
-
-function load_database() {
-	var jsonData
-	try {
-		const data = fs.readFileSync('./data.json', 'utf8');
-		jsonData = JSON.parse(data);
-	} catch (err) {
-		console.error('Erreur:', err);
-	}
-	return jsonData
-}
-const database = load_database();
+const database = load_database('./data.json');
 const loadedData = {};
+console.log(database);
+module.exports = {loadedData,database};
 
-function loadCommands() {
-    const commands = [] ;
-    const foldersPath = path.join(__dirname, 'commands');
-    const items = fs.readdirSync(foldersPath);
-
-    const edt = require("./commands/edt");
-    const test = require("./commands/test");
-    commands.push(edt.data.toJSON());
-    commands.push(test.data.toJSON());
-    client.commands.set(test.data.name, test);
-    client.commands.set(edt.data.name,edt);
-    
-    return commands;
-}
-
-function save(database) {
-	const jsonString = JSON.stringify(database, null, 2);
-
-	// Write to a file
-	fs.writeFile('data.json', jsonString, (err) => {
-		if (err) {
-			console.error('Error writing file:', err);
-		} else {
-			console.log('JSON file saved successfully!');
-		}
-	});
-}
-
-module.exports = { database , save , loadedData}
-
-
-
-
-
-
-
-
-const commands = loadCommands();
+const commands = loadCommands(client);
 const rest = new REST({ version: '10' }).setToken(token);
 (async () => {
     try {
@@ -80,19 +32,15 @@ const rest = new REST({ version: '10' }).setToken(token);
 
 client.on('clientReady', async () => {
     console.log(`Bot connecté en tant que ${client.user.tag}`);
-
+	console.log(database);
 	for (const [guildId,guildData] of Object.entries(database)) {
 		console.log(guildData);
-		for (const [role, value] of Object.entries(guildData["roles"])) {
+		for (const [role, value] of Object.entries(guildData.Entry)) {
 			console.log(value);
 			loadedData[role] = [] ;
-			await fetch(value["link"],value["file"],loadedData[role]);
+			await fetch(value.Link,value.File,loadedData[role]);
 		}
 	}
-    console.log("loadedData");
-	console.log(loadedData);
-
-
 
 	try {
 		const guild = await client.guilds.fetch(guildId);

@@ -1,7 +1,10 @@
 const {  SlashCommandSubcommandBuilder } = require('discord.js');
-const { database ,save, loadedData} = require('../index');
+const { save} = require('./util/edtUtil');
 const { registerNewGuild, isNewGuild } = require('./util/newGuild');
 const { fetch } = require('./util/loadIcs');
+const {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId} = require('./util/databaseUtil');
+const { database, loadedData} = require('./../index');
+
 module.exports = {
 	data: new SlashCommandSubcommandBuilder()
 		.setName('register')
@@ -18,27 +21,30 @@ module.exports = {
         ),
 	async execute(interaction) {
         // for new only on guild
-		if ( isNewGuild(interaction) ) {
-            registerNewGuild(interaction);
+		if ( isNewGuild(interaction,database) ) {
+            registerNewGuild(interaction,database);
         }
-
+        console.log(database);
         // get information
         const role = interaction.options.getString('role');
         const link = interaction.options.getString('link');
 
         // save the entry of pair role : {link , filename}
-        database[interaction.guild.id]["roles"][role] = {};
-        database[interaction.guild.id]["roles"][role]["link"] = link;
-        database[interaction.guild.id]["roles"][role]["file"] = "./data/" + role + link.split("/").pop() + ".json";
-        database[interaction.guild.id]["roles"][role]["option_rules"] = {};
-        database[interaction.guild.id]["roles"][role]["except"] = [];
+        const data =  getGuildEntry(database,interaction);
+        data[role] = {};
+        const roleData = data[role];
+        roleData.Link = link;
+        roleData.File = "./data/" + role + link.split("/").pop() + ".json";
+        roleData.Option = {};
+        roleData.Except = [];
+        getGuild(database,interaction).AdminRole = "";
         
         // save the database
         save(database);
 
         // load and save the ics
         loadedData[role] = {} ;
-        await fetch(database[interaction.guild.id]["roles"][role]["link"],database[interaction.guild.id]["roles"][role]["file"],loadedData[role]);
+        await fetch(roleData.Link,roleData.File,loadedData[role]);
 
         console.log(loadedData);
         await interaction.reply("Successfuly register the role for the link on your guild");
