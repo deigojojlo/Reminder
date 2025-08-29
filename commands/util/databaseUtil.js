@@ -34,4 +34,8 @@ function getAuthorId(interaction){
     return interaction.author.id;
 }
 
-module.exports = {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId};
+function setAdminRole(interaction,data,role){
+    data[interaction.guild.id].AdminRole = role;
+}
+
+module.exports = {getGuild,getGuildEntry,getExcept,getOption,getAdminRole,getGuildId,getGuildRoles,getGuildOwner,getAuthorId,setAdminRole};

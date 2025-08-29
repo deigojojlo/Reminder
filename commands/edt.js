@@ -10,6 +10,9 @@ const listOption = require('./listOption.js');
 const deleteOption = require('./deleteOption.js');
 const deleteexception = require('./deleteExcept.js');
 const listRole = require('./listRole.js');
+const { getAdminRole } = require('./util/databaseUtil.js');
+const { database } = require('../index.js');
+const setAdminRole = require('./setAdminRole.js');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('edt')
@@ -24,7 +27,8 @@ module.exports = {
 		.addSubcommand(listOption.data)
 		.addSubcommand(deleteOption.data)
 		.addSubcommand(deleteexception.data)
-		.addSubcommand(listRole.data),
+		.addSubcommand(listRole.data)
+		.addSubcommand(setAdminRole.data),
 	async execute(interaction) {
 		const subcommand = interaction.options.getSubcommand();
 		if (subcommand == 'register') {
@@ -47,7 +51,10 @@ module.exports = {
 			return ;
 		}
 		
-		if (interaction.guild.ownerId != interaction.user.id ) {
+		const member = await interaction.guild.members.fetch(interaction.user.id);
+        const userRoles = member.roles.cache;
+        const roles = userRoles.filter(role => role.id !== interaction.guild.id).map( role => role.id);
+		if (interaction.guild.ownerId != interaction.user.id || !(roles.includes(getAdminRole(database,interaction)))) {
 			await interaction.reply('Vous n\'etes pas autorisé à faire ceci');
 			return;
 		}
@@ -60,6 +67,8 @@ module.exports = {
 			await addOption.execute(interaction);
 		} else if (subcommand == 'addexception') {
 			await addexception.execute(interaction);
+		} else if (subcommand == 'setadminrole' && interaction.guild.ownerId != interaction.user.id ){
+			await setAdminRole.execute(interaction);
 		}
 	},
 };
